@@ -39,7 +39,7 @@ program
     const outputFile = options.output || null;
     inputFiles.forEach(async (inputFile) => {
       try {
-          await refactorText(inputFile, outputFile, ); 
+          await refactorText(inputFile, outputFile, model); 
       } catch (err) {
           stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
       }
@@ -47,8 +47,6 @@ program
     
 
   });
-
-
 
 const refactorText = async (inputFile, outputFile, model) => {
 
@@ -103,12 +101,12 @@ const readFile = async (filename) => {
     }
 };
 
-const geminiRefactor = async (text, model) => {
+const geminiRefactor = async (text, modelType) => {
     
     try {
         const genAI = new GoogleGenerativeAI(process.env.API_KEY);
         const model = genAI.getGenerativeModel({ 
-          model: genModel,
+          model: modelType,
           
             generationConfig: {
               responseMimeType: "application/json",
