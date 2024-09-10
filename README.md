@@ -1,7 +1,7 @@
 # RefactorCode
 A console application to reduce bugs, improve performance and improve readability of your code.
 
-![CodeRefactor](https://github.com/user-attachments/assets/e1e1e07a-e245-421c-b28c-6d942430790a)
+https://github.com/user-attachments/assets/9ca694a3-da23-4ae3-b476-1c071e675a66
 
 ## Features
 - Checks for any bugs and corrects them (out of bounds, performance issues, logical bugs).
