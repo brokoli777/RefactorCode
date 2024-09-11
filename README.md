@@ -14,9 +14,14 @@ https://github.com/user-attachments/assets/9ca694a3-da23-4ae3-b476-1c071e675a66
 ```
 refactorcode ./yourfile
 ```
-By the refactored code is displayed in the console. To specify an output file, use `code` -o `code` . See [Options](#options)
+By the refactored code is displayed in the console. To specify an output file, use `-o`. See [Options](#options)
 
 ## Setup Instructions
+
+Clone the repo:
+```
+git clone https://github.com/brokoli777/RefactorCode.git
+```
 
 Install node libraries
 ```
