@@ -59,19 +59,21 @@ const refactorText = async (inputFile, outputFile, model) => {
     try {
         const text = await readFile(inputFile);
         if (!text) {
-            throw new Error('File is empty or does not exist');
+            stderr.write(chalk.red('Error reading file: No text found\n'));
+            return;
         }
         
         const spinner = yoctoSpinner({text: 'Refactoring Code'}).start();
 
         const { refactoredCode, explanation } = await geminiRefactor(text, model);
 
+        spinner.stop();
+
         if(!refactoredCode || !explanation) {
             spinner.error('Error refactoring code');
-            throw new Error('Error refactoring code');
+            stderr.write(chalk.red('Error refactoring code: No refactored code or explanation returned\n'));
         }
         else {
-          spinner.stop();
           spinner.success('Success!');
         }
         
@@ -84,9 +86,9 @@ const refactorText = async (inputFile, outputFile, model) => {
         stdout.write(chalk.yellow.underline.bold("\n\nExplanation:\n\n")+chalk.blueBright(explanation));
 
         stdout.write(chalk.bold.green(`\n\nRefactoring complete!`));
+
     } catch (err) {
         stderr.write(chalk.red(`Error refactoring file: ${err.message}\n`));
-        throw new Error(`Error with file or gemmini API: ${err.message}`);
     }
 };
 
@@ -95,7 +97,8 @@ const readFile = async (filename) => {
         const data = await fs.readFile(filename, 'utf8');
         return data;
     } catch (err) {
-        throw new Error(`Error reading file ${filename}: ${err.message}`);
+        stderr.write(chalk.red(`Error reading file: ${err.message}\n`));
+        return null;
     }
 };
 
@@ -128,7 +131,7 @@ const geminiRefactor = async (text, modelType) => {
 
         const prompt = `
         Refactor the following file by doing the following:
-        1. Remove unnecessary whitespace and unreachable code.
+        1. Remove unnecessary whitespace and unreachable or commented out code.
         2. Remove redundant loops and correct inefficient code.
         3. Correct any bugs.
         4. Improve performance.
@@ -153,7 +156,7 @@ const geminiRefactor = async (text, modelType) => {
         return { refactoredCode, explanation };
 
     } catch (err) {
-        throw new Error(`Error with AI refactoring: ${err.message}`);
+        stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));
     }
 };
 
