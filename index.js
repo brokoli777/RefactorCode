@@ -63,9 +63,6 @@ const refactorText = async (inputFile, outputFile, model) => {
         }
         
         const spinner = yoctoSpinner({text: 'Refactoring Code'}).start();
-        setTimeout(() => {
-          spinner.stop();
-        }, 12000);
 
         const { refactoredCode, explanation } = await geminiRefactor(text, model);
 
@@ -74,6 +71,7 @@ const refactorText = async (inputFile, outputFile, model) => {
             throw new Error('Error refactoring code');
         }
         else {
+          spinner.stop();
           spinner.success('Success!');
         }
         
