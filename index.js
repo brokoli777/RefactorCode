@@ -87,7 +87,7 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
         stdout.write(chalk.yellow.underline.bold("\n\nExplanation:\n\n")+chalk.blueBright(explanation));
 
         if(tokens){
-          stdout.write(chalk.yellow.underline.bold("\n\Usage Data :\n\n")+chalk.blueBright(JSON.stringify(result.response.usageMetadata, null, 2)));
+          stderr.write(chalk.yellow.underline.bold("\n\Usage Data :\n\n")+chalk.blueBright(JSON.stringify(result.response.usageMetadata, null, 2)));
         }
 
         // 
@@ -109,7 +109,7 @@ const readFile = async (filename) => {
 };
 
 // new flag that'll check for the extra like the token used
-const geminiRefactor = async (text, modelType, extraInfo = false) => {
+const geminiRefactor = async (text, modelType) => {
     
     try {
         const genAI = new GoogleGenerativeAI(process.env.API_KEY);
