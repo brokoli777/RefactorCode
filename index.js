@@ -20,6 +20,7 @@ program
   .argument('<inputFiles...>', 'Input file(s) to process')
   .option('-o, --output <outputFile>', 'Output file (default: output to console)')
   .option('-m, --model [MODEL]', '1.5p','1.5f', "Generative AI model to use (default: gemini-1.5-flash) Choices: 1.5f (gemini-1.5-flash), 1.5p (gemini-1.5-pro)'")
+  .option('-t --tokenusage', "Will output the extra information returned from the generative AI response")
   .action((inputFiles, options) => {
 
     if(inputFiles.length > 1 && options.output) {
@@ -39,7 +40,7 @@ program
     const outputFile = options.output || null;
     inputFiles.forEach(async (inputFile) => {
       try {
-          await refactorText(inputFile, outputFile, model); 
+          await refactorText(inputFile, outputFile, model, options.tokenusage); 
       } catch (err) {
           stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
       }
@@ -48,7 +49,7 @@ program
 
   });
 
-const refactorText = async (inputFile, outputFile, model) => {
+const refactorText = async (inputFile, outputFile, model, tokens = false) => {
 
   stdout.write(`Processing file: ${inputFile}\n`);
 
@@ -65,7 +66,7 @@ const refactorText = async (inputFile, outputFile, model) => {
         
         const spinner = yoctoSpinner({text: 'Refactoring Code'}).start();
 
-        const { refactoredCode, explanation } = await geminiRefactor(text, model);
+        const { refactoredCode, explanation, result } = await geminiRefactor(text, model);
 
         spinner.stop();
 
@@ -85,6 +86,11 @@ const refactorText = async (inputFile, outputFile, model) => {
         }
         stdout.write(chalk.yellow.underline.bold("\n\nExplanation:\n\n")+chalk.blueBright(explanation));
 
+        if(tokens){
+          stdout.write(chalk.yellow.underline.bold("\n\Usage Data :\n\n")+chalk.blueBright(JSON.stringify(result.response.usageMetadata, null, 2)));
+        }
+
+        // 
         stdout.write(chalk.bold.green(`\n\nRefactoring complete!`));
 
     } catch (err) {
@@ -102,7 +108,8 @@ const readFile = async (filename) => {
     }
 };
 
-const geminiRefactor = async (text, modelType) => {
+// new flag that'll check for the extra like the token used
+const geminiRefactor = async (text, modelType, extraInfo = false) => {
     
     try {
         const genAI = new GoogleGenerativeAI(process.env.API_KEY);
@@ -153,7 +160,7 @@ const geminiRefactor = async (text, modelType) => {
 
         const { explanation, refactoredCode } = JSON.parse(result.response.text());
 
-        return { refactoredCode, explanation };
+        return { refactoredCode, explanation, result };
 
     } catch (err) {
         stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));

@@ -61,7 +61,9 @@ Choices:
   refactorcode examples/test.py -m 1.5p
   ```
 
-**-o or -output**: Allows to set the output file 
+**-o or -output**- Allows to set the output file 
+
+**-t or -tokenchoice:** Allows get information on the tokens used
 
 ```
 refactorcode examples/test.py -o hello.py
