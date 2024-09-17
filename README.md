@@ -5,9 +5,9 @@ https://github.com/user-attachments/assets/9ca694a3-da23-4ae3-b476-1c071e675a66
 
 ## Features
 - Checks for any bugs and corrects them (out of bounds, performance issues, logical bugs).
-- Removes commented out and unreachable code
-- Adds comments to explain existing code
-- Splits very large functions into smaller functions for better modularity
+- Removes commented out and unreachable code.
+- Adds comments to explain existing code.
+- Splits very large functions into smaller functions for better modularity.
 
 ## Usage
 

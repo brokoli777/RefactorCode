@@ -30,7 +30,7 @@ program
   .description(
     "Refactor your code to make it cleaner, correct bugs, and improve readability."
   )
-  .argument("<inputFiles...>", "Input file(s) to process")
+  .argument("[inputFiles...]", "Input file(s) to process")
   .option(
     "-o, --output <outputFile>",
     "Output file (default: output to console)"
@@ -41,7 +41,7 @@ program
       combinedModelsString
   )
   .option(
-    "-t --token-usage",
+    "-t --token-usage [tokenUsage]",
     "Will output token usage information for the refactored code"
   )
   .action((inputFiles, options) => {
@@ -63,17 +63,19 @@ program
       process.exit(1);
     }
 
-    const model = modelMap.get(options.model) || modelMap.get("1.5f");
-    stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
+    if (inputFiles.length >= 1) {
+      const model = modelMap.get(options.model) || modelMap.get("1.5f");
+      stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
 
-    const outputFile = options.output || null;
-    inputFiles.forEach(async (inputFile) => {
-      try {
-        await refactorText(inputFile, outputFile, model, options.tokenusage);
-      } catch (err) {
-        stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
-      }
-    });
+      const outputFile = options.output || null;
+      inputFiles.forEach(async (inputFile) => {
+        try {
+          await refactorText(inputFile, outputFile, model, options.tokenUsage);
+        } catch (err) {
+          stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+        }
+      });
+    }
   });
 
 const refactorText = async (inputFile, outputFile, model, tokens = false) => {
@@ -138,7 +140,6 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
       );
     }
 
-    //
     stdout.write(chalk.bold.green(`\n\nRefactoring complete!`));
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring file: ${err.message}\n`));
