@@ -51,7 +51,7 @@ refactorcode examples/test.py
 
 ## Options
 
-**-m or -model**: Allows to specify the model\
+**-m or --model**: Allows to specify the model
 
 Choices: 
 - 1.5f (gemini-1.5-flash) (**default**)
@@ -61,9 +61,9 @@ Choices:
   refactorcode examples/test.py -m 1.5p
   ```
 
-**-o or -output**- Allows to set the output file 
+**-o or --output**- Allows to set the output file 
 
-**-t or -tokenchoice:** Allows get information on the tokens used
+**-t or --tokenusage:** Allows get information on the tokens used
 
 ```
 refactorcode examples/test.py -o hello.py

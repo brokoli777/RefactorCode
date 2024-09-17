@@ -86,8 +86,10 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
         }
         stdout.write(chalk.yellow.underline.bold("\n\nExplanation:\n\n")+chalk.blueBright(explanation));
 
+        
         if(tokens){
-          stderr.write(chalk.yellow.underline.bold("\n\Usage Data :\n\n")+chalk.blueBright(JSON.stringify(result.response.usageMetadata, null, 2)));
+          const usageInfo = result.response.usageMetadata;
+          stderr.write(chalk.yellow.underline.bold("\n\nUsage Data :\n")+chalk.magenta("\nPrompt Tokens: "+usageInfo.promptTokenCount +"\nResponse Tokens: "+usageInfo.candidatesTokenCount +"\nTotal Tokens: "+usageInfo.totalTokenCount));
         }
 
         // 
@@ -108,7 +110,6 @@ const readFile = async (filename) => {
     }
 };
 
-// new flag that'll check for the extra like the token used
 const geminiRefactor = async (text, modelType) => {
     
     try {
@@ -140,11 +141,14 @@ const geminiRefactor = async (text, modelType) => {
         Refactor the following file by doing the following:
         1. Remove unnecessary whitespace and unreachable or commented out code.
         2. Remove redundant loops and correct inefficient code.
-        3. Correct any bugs.
-        4. Improve performance.
+        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors
+, Security Bugs, Usability Bugs, Calculation Bugs).
+        4. Improve performance where it can be done without changing existing functionality.
         5. Add comments and improve readability.
         6. Make large functions more modular.
         Also provide a brief explanation of the changes made.
+
+
 
         For Example:
         {
