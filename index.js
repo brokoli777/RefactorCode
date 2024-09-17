@@ -13,14 +13,25 @@ const asciiArt = "\r\n _____             _        ______         __             
 
 stdout.write(chalk.cyanBright(asciiArt));
 
+const modelMap = new Map([
+  ["1.5f", "gemini-1.5-flash"],
+  ["1.5p", "gemini-1.5-pro"]
+]);
+
+const validModels = [];
+for (const [key, value] of modelMap.entries()) {
+  validModels.push(`${key} (${value})`);
+}
+const combinedModelsString = validModels.join(', ');
+
 program
   .name('RefactorCode')
   .version('1.0.0', '-v, --version', 'Displays current tool version')
   .description('Refactor your code to make it cleaner, correct bugs, and improve readability.')
   .argument('<inputFiles...>', 'Input file(s) to process')
   .option('-o, --output <outputFile>', 'Output file (default: output to console)')
-  .option('-m, --model [MODEL]', '1.5p','1.5f', "Generative AI model to use (default: gemini-1.5-flash) Choices: 1.5f (gemini-1.5-flash), 1.5p (gemini-1.5-pro)'")
-  .option('-t --tokenusage', "Will output the extra information returned from the generative AI response")
+  .option('-m, --model [MODEL]', 'Generative AI model to use (default: gemini-1.5-flash) Choices: ' + combinedModelsString)
+  .option('-t --token-usage', "Will output token usage information for the refactored code")
   .action((inputFiles, options) => {
 
     if(inputFiles.length > 1 && options.output) {
@@ -28,12 +39,12 @@ program
       process.exit(1);
     }
 
-    if(options.model && !["1.5f", "1.5p", "1.0p"].includes(options.model)) {
-      stderr.write(chalk.red('Error: Invalid model specified. Choices: 1.5f (gemini-1.5-flash), 1.5p (gemini-1.5-pro), 1.0p (gemini-1.0-pro)\n'));
+    if(options.model && !modelMap.has(options.model)) {
+      stderr.write(chalk.red(`Error: Invalid model specified. Choices: ${combinedModelsString}\n`));
       process.exit(1);
     }
 
-    const model = options.model === "1.5f" ? "gemini-1.5-flash" : options.model === "1.0p" ? "gemini-1.0-pro" : options.model === "1.5p" ? "gemini-1.5-pro" : "gemini-1.5-flash";
+    const model = modelMap.get(options.model) || modelMap.get("1.5f");
     stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
 
 
@@ -141,8 +152,7 @@ const geminiRefactor = async (text, modelType) => {
         Refactor the following file by doing the following:
         1. Remove unnecessary whitespace and unreachable or commented out code.
         2. Remove redundant loops and correct inefficient code.
-        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors
-, Security Bugs, Usability Bugs, Calculation Bugs).
+        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors, Security Bugs, Usability Bugs, Calculation Bugs).
         4. Improve performance where it can be done without changing existing functionality.
         5. Add comments and improve readability.
         6. Make large functions more modular.

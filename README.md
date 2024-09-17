@@ -63,7 +63,7 @@ Choices:
 
 **-o or --output**- Allows to set the output file 
 
-**-t or --tokenusage:** Allows get information on the tokens used
+**-t or --token-usage:** Allows get information on the tokens used
 
 ```
 refactorcode examples/test.py -o hello.py
