@@ -8,6 +8,7 @@ import chalk from "chalk";
 import yoctoSpinner from "yocto-spinner";
 import { stderr, stdout } from "process";
 
+//Ascii Art for the banner
 const asciiArt =
   "\r\n _____             _        ______         __               _                \r\n/  __ \\           | |       | ___ \\       / _|             | |               \r\n| /  \\/  ___    __| |  ___  | |_/ /  ___ | |_   __ _   ___ | |_   ___   _ __ \r\n| |     / _ \\  / _` | / _ \\ |    /  / _ \\|  _| / _` | / __|| __| / _ \\ | '__|\r\n| \\__/\\| (_) || (_| ||  __/ | |\\ \\ |  __/| |  | (_| || (__ | |_ | (_) || |   \r\n \\____/ \\___/  \\__,_| \\___| \\_| \\_| \\___||_|   \\__,_| \\___| \\__| \\___/ |_|   \r\n                                                                             \r\n                                                                             \r\n";
 
@@ -24,6 +25,7 @@ for (const [key, value] of modelMap.entries()) {
 }
 const combinedModelsString = validModels.join(", ");
 
+//Commander.js handling the command line arguments and options
 program
   .name("RefactorCode")
   .version("1.0.0", "-v, --version", "Displays current tool version")
@@ -45,6 +47,8 @@ program
     "Will output token usage information for the refactored code"
   )
   .action((inputFiles, options) => {
+
+    //When there are multiple files, output file argument is not allowed due to ambiguity
     if (inputFiles.length > 1 && options.output) {
       stderr.write(
         chalk.red(
@@ -125,6 +129,7 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
         chalk.blueBright(explanation)
     );
 
+    //Output token usage information if token -t option is specified
     if (tokens) {
       const usageInfo = result.response.usageMetadata;
       stderr.write(
@@ -156,6 +161,7 @@ const readFile = async (filename) => {
   }
 };
 
+//Uses the Gemini API to refactor the code using predefined prompt, returns the refactored code and explanation
 const geminiRefactor = async (text, modelType) => {
   try {
     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
