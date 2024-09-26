@@ -46,8 +46,11 @@ program
     "-t --token-usage [tokenUsage]",
     "Will output token usage information for the refactored code"
   )
+  .option(
+    "-s, --stream [stream]",
+    "Stream the response as it is received (default: false)"
+  )
   .action((inputFiles, options) => {
-
     //When there are multiple files, output file argument is not allowed due to ambiguity
     if (inputFiles.length > 1 && options.output) {
       stderr.write(
@@ -67,6 +70,12 @@ program
       process.exit(1);
     }
 
+    if(options.stream && options.output || options.stream && inputFiles.length > 1 || options.stream && options.tokenUsage){
+      stderr.write(chalk.red("Error: Cannot specify output file, multiple files or token usage when streaming\n"));
+      process.exit(1);
+
+    }
+
     if (inputFiles.length >= 1) {
       const model = modelMap.get(options.model) || modelMap.get("1.5f");
       stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
@@ -74,7 +83,7 @@ program
       const outputFile = options.output || null;
       inputFiles.forEach(async (inputFile) => {
         try {
-          await refactorText(inputFile, outputFile, model, options.tokenUsage);
+          await refactorText(inputFile, outputFile, model, options.tokenUsage, options.stream);
         } catch (err) {
           stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
         }
@@ -82,7 +91,8 @@ program
     }
   });
 
-const refactorText = async (inputFile, outputFile, model, tokens = false) => {
+const refactorText = async (inputFile, outputFile, model, tokens = false, stream = false) => {
+
   stdout.write(`Processing file: ${inputFile}\n`);
 
   if (outputFile) {
@@ -96,38 +106,12 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
       return;
     }
 
-    const spinner = yoctoSpinner({ text: "Refactoring Code" }).start();
-
-    const { refactoredCode, explanation, result } = await geminiRefactor(
-      text,
-      model
-    );
-
-    spinner.stop();
-
-    if (!refactoredCode || !explanation) {
-      spinner.error("Error refactoring code");
-      stderr.write(
-        chalk.red(
-          "Error refactoring code: No refactored code or explanation returned\n"
-        )
-      );
+    let result = null;
+    if (stream) {
+      result = await geminiStreamRefactor(text, model, inputFile, outputFile);
     } else {
-      spinner.success("Success!");
+      result = await geminiRefactor(text, model, inputFile);
     }
-
-    if (!outputFile) {
-      stdout.write(
-        chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`) +
-          chalk.green(refactoredCode)
-      );
-    } else {
-      await fs.writeFile(outputFile, refactoredCode, "utf8");
-    }
-    stdout.write(
-      chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
-        chalk.blueBright(explanation)
-    );
 
     //Output token usage information if token -t option is specified
     if (tokens) {
@@ -145,7 +129,7 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
       );
     }
 
-    stdout.write(chalk.bold.green(`\n\nRefactoring complete!`));
+    stdout.write(chalk.bold.green(`\n\nRefactoring complete!\n\n`));
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring file: ${err.message}\n`));
   }
@@ -162,8 +146,10 @@ const readFile = async (filename) => {
 };
 
 //Uses the Gemini API to refactor the code using predefined prompt, returns the refactored code and explanation
-const geminiRefactor = async (text, modelType) => {
+const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
   try {
+    const spinner = yoctoSpinner({ text: "Refactoring Code" }).start();
+
     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
     const model = genAI.getGenerativeModel({
       model: modelType,
@@ -195,8 +181,6 @@ const geminiRefactor = async (text, modelType) => {
         6. Make large functions more modular.
         Also provide a brief explanation of the changes made.
 
-
-
         For Example:
         {
           "refactored_text": "Refactored code here",
@@ -211,7 +195,74 @@ const geminiRefactor = async (text, modelType) => {
 
     const { explanation, refactoredCode } = JSON.parse(result.response.text());
 
-    return { refactoredCode, explanation, result };
+    spinner.stop();
+
+    if (!refactoredCode || !explanation) {
+      spinner.error("Error refactoring code");
+      stderr.write(
+        chalk.red(
+          "Error refactoring code: No refactored code or explanation returned\n"
+        )
+      );
+    } else {
+      spinner.success("Success!");
+    }
+
+    if (!outputFile) {
+      stdout.write(
+        chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`) +
+          chalk.green(refactoredCode)
+      );
+    } else {
+      await fs.writeFile(outputFile, refactoredCode, "utf8");
+    }
+
+    if(outputFile){
+      await fs.writeFile(outputFile, refactoredCode, "utf8");
+    }
+
+    stdout.write(
+      chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
+        chalk.blueBright(explanation)
+    );
+
+    return result;
+  } catch (err) {
+    stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));
+  }
+};
+
+const geminiStreamRefactor = async (text, modelType, inputFile) => {
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+    const model = genAI.getGenerativeModel({ model: modelType });
+
+    const prompt = `
+        Refactor the following file by doing the following:
+        1. Remove unnecessary whitespace and unreachable or commented out code.
+        2. Remove redundant loops and correct inefficient code.
+        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors, Security Bugs, Usability Bugs, Calculation Bugs).
+        4. Improve performance where it can be done without changing existing functionality.
+        5. Add comments and improve readability.
+        6. Make large functions more modular.
+
+        JUST GIVE THE CODE/TEXT TO BE REFACTORED. THE RESPONSE WILL BE STREAMED AS IT IS RECEIVED
+        Code/Text:
+        ${text}
+        `;
+
+    const result = await model.generateContentStream(prompt);
+
+    stdout.write(
+      chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`)
+    );
+
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      process.stdout.write(chalk.green(chunkText));
+    }
+
+    return result;
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));
   }
