@@ -72,13 +72,13 @@ program
       process.exit(1);
     }
 
-    if(options.stream && options.output || options.stream && inputFiles.length > 1 || options.stream && options.tokenUsage){
+    if(options.stream && options.output || options.stream && inputPaths.length > 1 || options.stream && options.tokenUsage){
       stderr.write(chalk.red("Error: Cannot specify output file, multiple files or token usage when streaming\n"));
       process.exit(1);
 
     }
 
-    if (inputFiles.length >= 1) {
+    if (inputPaths.length >= 1) {
       const model = modelMap.get(options.model) || modelMap.get("1.5f");
       stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
 
@@ -137,9 +137,9 @@ const refactorText = async (inputFile, outputFile, model, tokens = false, stream
 
     let result = null;
     if (stream) {
-      result = await geminiStreamRefactor(text, model, inputFile, outputFile);
+      result = await geminiStreamRefactor(text, model, inputFile);
     } else {
-      result = await geminiRefactor(text, model, inputFile);
+      result = await geminiRefactor(text, model, inputFile, outputFile);
     }
 
     //Output token usage information if token -t option is specified
@@ -246,10 +246,6 @@ const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
       await fs.writeFile(outputFile, refactoredCode, "utf8");
     }
 
-    if(outputFile){
-      await fs.writeFile(outputFile, refactoredCode, "utf8");
-    }
-
     stdout.write(
       chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
         chalk.blueBright(explanation)
@@ -261,6 +257,8 @@ const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
   }
 };
 
+
+//Streaming version of the refactoring code
 const geminiStreamRefactor = async (text, modelType, inputFile) => {
   try {
     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
