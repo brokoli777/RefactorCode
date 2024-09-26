@@ -2,6 +2,7 @@
 
 import { program } from "commander";
 import fs from "fs/promises";
+import path from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import "dotenv/config";
 import chalk from "chalk";
@@ -12,7 +13,7 @@ import { stderr, stdout } from "process";
 const asciiArt =
   "\r\n _____             _        ______         __               _                \r\n/  __ \\           | |       | ___ \\       / _|             | |               \r\n| /  \\/  ___    __| |  ___  | |_/ /  ___ | |_   __ _   ___ | |_   ___   _ __ \r\n| |     / _ \\  / _` | / _ \\ |    /  / _ \\|  _| / _` | / __|| __| / _ \\ | '__|\r\n| \\__/\\| (_) || (_| ||  __/ | |\\ \\ |  __/| |  | (_| || (__ | |_ | (_) || |   \r\n \\____/ \\___/  \\__,_| \\___| \\_| \\_| \\___||_|   \\__,_| \\___| \\__| \\___/ |_|   \r\n                                                                             \r\n                                                                             \r\n";
 
-stdout.write(chalk.cyanBright(asciiArt));
+  stdout.write(chalk.cyanBright(asciiArt));
 
 const modelMap = new Map([
   ["1.5f", "gemini-1.5-flash"],
@@ -32,7 +33,7 @@ program
   .description(
     "Refactor your code to make it cleaner, correct bugs, and improve readability."
   )
-  .argument("[inputFiles...]", "Input file(s) to process")
+  .argument("[inputPaths...]", "Input file(s) or folder(s) to process")
   .option(
     "-o, --output <outputFile>",
     "Output file (default: output to console)"
@@ -46,10 +47,10 @@ program
     "-t --token-usage [tokenUsage]",
     "Will output token usage information for the refactored code"
   )
-  .action((inputFiles, options) => {
-
+  .action(async (inputPaths, options) => {
+     
     //When there are multiple files, output file argument is not allowed due to ambiguity
-    if (inputFiles.length > 1 && options.output) {
+     if (inputPaths.length > 1 && options.output) {
       stderr.write(
         chalk.red(
           "Error: Cannot specify output file when processing multiple files\n"
@@ -67,20 +68,47 @@ program
       process.exit(1);
     }
 
-    if (inputFiles.length >= 1) {
+    if (inputPaths.length >= 1) {
       const model = modelMap.get(options.model) || modelMap.get("1.5f");
       stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
 
       const outputFile = options.output || null;
-      inputFiles.forEach(async (inputFile) => {
-        try {
-          await refactorText(inputFile, outputFile, model, options.tokenUsage);
-        } catch (err) {
-          stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+      
+      for (const inputPath of inputPaths) {
+        const isDirectory = await checkIfDirectory(inputPath);
+
+        if (isDirectory) {
+          const files = await fs.readdir(inputPath);
+          const filePaths = files.map((file) => path.join(inputPath, file));
+          
+          for (const filePath of filePaths) {
+            try {
+              await refactorText(filePath, outputFile, model, options.tokenUsage);
+            } catch (err) {
+              stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+            }
+          }
+        } else {
+          // Process single file
+          try {
+            await refactorText(inputPath, outputFile, model, options.tokenUsage);
+          } catch (err) {
+            stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+          }
         }
-      });
+      }
     }
   });
+
+const checkIfDirectory = async (inputPath) => {
+  try {
+    const stat = await fs.lstat(inputPath);
+    return stat.isDirectory();
+  } catch (err) {
+    stderr.write(chalk.red(`Error checking path: ${err.message}\n`));
+    return false;
+  }
+};
 
 const refactorText = async (inputFile, outputFile, model, tokens = false) => {
   stdout.write(`Processing file: ${inputFile}\n`);
@@ -145,7 +173,7 @@ const refactorText = async (inputFile, outputFile, model, tokens = false) => {
       );
     }
 
-    stdout.write(chalk.bold.green(`\n\nRefactoring complete!`));
+    stdout.write(chalk.bold.green(`\n\nRefactoring complete!\n\n`));
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring file: ${err.message}\n`));
   }
@@ -205,7 +233,7 @@ const geminiRefactor = async (text, modelType) => {
 
         Code/Text:
         ${text}
-        `;
+    `;
 
     const result = await model.generateContent(prompt);
 
