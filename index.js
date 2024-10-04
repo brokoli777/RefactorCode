@@ -1,69 +1,77 @@
 #!/usr/bin/env node
 
-import { program } from "commander";
-import fs from "fs/promises";
-import path from "path";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import "dotenv/config";
-import chalk from "chalk";
-import yoctoSpinner from "yocto-spinner";
-import { stderr, stdout } from "process";
+import { program } from 'commander';
+import fsPromises from 'fs/promises';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import 'dotenv/config';
+import chalk from 'chalk';
+import yoctoSpinner from 'yocto-spinner';
+import { stderr, stdout } from 'process';
+import toml from 'toml';
 
 //Ascii Art for the banner
 const asciiArt =
   "\r\n _____             _        ______         __               _                \r\n/  __ \\           | |       | ___ \\       / _|             | |               \r\n| /  \\/  ___    __| |  ___  | |_/ /  ___ | |_   __ _   ___ | |_   ___   _ __ \r\n| |     / _ \\  / _` | / _ \\ |    /  / _ \\|  _| / _` | / __|| __| / _ \\ | '__|\r\n| \\__/\\| (_) || (_| ||  __/ | |\\ \\ |  __/| |  | (_| || (__ | |_ | (_) || |   \r\n \\____/ \\___/  \\__,_| \\___| \\_| \\_| \\___||_|   \\__,_| \\___| \\__| \\___/ |_|   \r\n                                                                             \r\n                                                                             \r\n";
 
-  stdout.write(chalk.cyanBright(asciiArt));
+stdout.write(chalk.cyanBright(asciiArt));
 
 const modelMap = new Map([
-  ["1.5f", "gemini-1.5-flash"],
-  ["1.5p", "gemini-1.5-pro"],
+  ['1.5f', 'gemini-1.5-flash'],
+  ['1.5p', 'gemini-1.5-pro'],
 ]);
 
 const validModels = [];
 for (const [key, value] of modelMap.entries()) {
   validModels.push(`${key} (${value})`);
 }
-const combinedModelsString = validModels.join(", ");
+const combinedModelsString = validModels.join(', ');
+
+// Get the API keys and other preferences (i.e. MODEL) from the TOML config file. If no TOML file exists, config = null, use the .env variables
+const config = getConfig();
+const API_KEY = config?.api_keys?.API_KEY || process.env.API_KEY;
 
 //Commander.js handling the command line arguments and options
 program
-  .name("RefactorCode")
-  .version("1.0.0", "-v, --version", "Displays current tool version")
+  .name('RefactorCode')
+  .version('1.0.0', '-v, --version', 'Displays current tool version')
   .description(
-    "Refactor your code to make it cleaner, correct bugs, and improve readability."
+    'Refactor your code to make it cleaner, correct bugs, and improve readability.'
   )
-  .argument("[inputPaths...]", "Input file(s) or folder(s) to process")
+  .argument('[inputPaths...]', 'Input file(s) or folder(s) to process')
   .option(
-    "-o, --output <outputFile>",
-    "Output file (default: output to console)"
+    '-o, --output <outputFile>',
+    'Output file (default: output to console)'
   )
   .option(
-    "-m, --model [MODEL]",
-    "Generative AI model to use (default: gemini-1.5-flash) Choices: " +
+    '-m, --model [MODEL]',
+    'Generative AI model to use (default: gemini-1.5-flash) Choices: ' +
       combinedModelsString
   )
   .option(
-    "-t --token-usage [tokenUsage]",
-    "Will output token usage information for the refactored code"
+    '-t --token-usage [tokenUsage]',
+    'Will output token usage information for the refactored code'
   )
   .option(
-    "-s, --stream [stream]",
-    "Stream the response as it is received (default: false)"
+    '-s, --stream [stream]',
+    'Stream the response as it is received (default: false)'
   )
   .action(async (inputPaths, options) => {
-     
+    const selectedModel = options.model || config?.preferences?.MODEL || '1.5f';
+
     //When there are multiple files, output file argument is not allowed due to ambiguity
-     if (inputPaths.length > 1 && options.output) {
+    if (inputPaths.length > 1 && options.output) {
       stderr.write(
         chalk.red(
-          "Error: Cannot specify output file when processing multiple files\n"
+          'Error: Cannot specify output file when processing multiple files\n'
         )
       );
       process.exit(1);
     }
 
-    if (options.model && !modelMap.has(options.model)) {
+    if (selectedModel && !modelMap.has(selectedModel)) {
       stderr.write(
         chalk.red(
           `Error: Invalid model specified. Choices: ${combinedModelsString}\n`
@@ -72,38 +80,60 @@ program
       process.exit(1);
     }
 
-    if(options.stream && options.output || options.stream && inputPaths.length > 1 || options.stream && options.tokenUsage){
-      stderr.write(chalk.red("Error: Cannot specify output file, multiple files or token usage when streaming\n"));
+    if (
+      (options.stream && options.output) ||
+      (options.stream && inputPaths.length > 1) ||
+      (options.stream && options.tokenUsage)
+    ) {
+      stderr.write(
+        chalk.red(
+          'Error: Cannot specify output file, multiple files or token usage when streaming\n'
+        )
+      );
       process.exit(1);
-
     }
 
     if (inputPaths.length >= 1) {
-      const model = modelMap.get(options.model) || modelMap.get("1.5f");
+      const model = modelMap.get(selectedModel);
       stdout.write(chalk.yellow(`Refactoring code using model: ${model}\n`));
 
       const outputFile = options.output || null;
-      
+
       for (const inputPath of inputPaths) {
         const isDirectory = await checkIfDirectory(inputPath);
 
         if (isDirectory) {
-          const files = await fs.readdir(inputPath);
+          const files = await fsPromises.readdir(inputPath);
           const filePaths = files.map((file) => path.join(inputPath, file));
-          
+
           for (const filePath of filePaths) {
             try {
-              await refactorText(filePath, outputFile, model, options.tokenUsage);
+              await refactorText(
+                filePath,
+                outputFile,
+                model,
+                options.tokenUsage
+              );
             } catch (err) {
-              stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+              stdout.write(
+                chalk.red(`Error processing file: ${err.message}\n`)
+              );
+              process.exit(1);
             }
           }
         } else {
           // Process single file
           try {
-            await refactorText(inputPath, outputFile, model, options.tokenUsage, options.stream);
+            await refactorText(
+              inputPath,
+              outputFile,
+              model,
+              options.tokenUsage,
+              options.stream
+            );
           } catch (err) {
             stdout.write(chalk.red(`Error processing file: ${err.message}\n`));
+            process.exit(1);
           }
         }
       }
@@ -112,7 +142,7 @@ program
 
 const checkIfDirectory = async (inputPath) => {
   try {
-    const stat = await fs.lstat(inputPath);
+    const stat = await fsPromises.lstat(inputPath);
     return stat.isDirectory();
   } catch (err) {
     stderr.write(chalk.red(`Error checking path: ${err.message}\n`));
@@ -120,8 +150,13 @@ const checkIfDirectory = async (inputPath) => {
   }
 };
 
-const refactorText = async (inputFile, outputFile, model, tokens = false, stream = false) => {
-
+const refactorText = async (
+  inputFile,
+  outputFile,
+  model,
+  tokens = false,
+  stream = false
+) => {
   stdout.write(`Processing file: ${inputFile}\n`);
 
   if (outputFile) {
@@ -131,7 +166,7 @@ const refactorText = async (inputFile, outputFile, model, tokens = false, stream
   try {
     const text = await readFile(inputFile);
     if (!text) {
-      stderr.write(chalk.red("Error reading file: No text found\n"));
+      stderr.write(chalk.red('Error reading file: No text found\n'));
       return;
     }
 
@@ -146,13 +181,13 @@ const refactorText = async (inputFile, outputFile, model, tokens = false, stream
     if (tokens) {
       const usageInfo = result.response.usageMetadata;
       stderr.write(
-        chalk.yellow.underline.bold("\n\nUsage Data :\n") +
+        chalk.yellow.underline.bold('\n\nUsage Data :\n') +
           chalk.magenta(
-            "\nPrompt Tokens: " +
+            '\nPrompt Tokens: ' +
               usageInfo.promptTokenCount +
-              "\nResponse Tokens: " +
+              '\nResponse Tokens: ' +
               usageInfo.candidatesTokenCount +
-              "\nTotal Tokens: " +
+              '\nTotal Tokens: ' +
               usageInfo.totalTokenCount
           )
       );
@@ -161,12 +196,13 @@ const refactorText = async (inputFile, outputFile, model, tokens = false, stream
     stdout.write(chalk.bold.green(`\n\nRefactoring complete!\n\n`));
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring file: ${err.message}\n`));
+    process.exit(1);
   }
 };
 
 const readFile = async (filename) => {
   try {
-    const data = await fs.readFile(filename, "utf8");
+    const data = await fsPromises.readFile(filename, 'utf8');
     return data;
   } catch (err) {
     stderr.write(chalk.red(`Error reading file: ${err.message}\n`));
@@ -177,25 +213,25 @@ const readFile = async (filename) => {
 //Uses the Gemini API to refactor the code using predefined prompt, returns the refactored code and explanation
 const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
   try {
-    const spinner = yoctoSpinner({ text: "Refactoring Code" }).start();
+    const spinner = yoctoSpinner({ text: 'Refactoring Code ' }).start();
 
-    const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+    const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({
       model: modelType,
 
       generationConfig: {
-        responseMimeType: "application/json",
+        responseMimeType: 'application/json',
         responseSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             refactoredCode: {
-              type: "string",
+              type: 'string',
             },
             explanation: {
-              type: "string",
+              type: 'string',
             },
           },
-          required: ["refactoredCode", "explanation"],
+          required: ['refactoredCode', 'explanation'],
         },
       },
     });
@@ -227,14 +263,14 @@ const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
     spinner.stop();
 
     if (!refactoredCode || !explanation) {
-      spinner.error("Error refactoring code");
+      spinner.error('Error refactoring code');
       stderr.write(
         chalk.red(
-          "Error refactoring code: No refactored code or explanation returned\n"
+          'Error refactoring code: No refactored code or explanation returned\n'
         )
       );
     } else {
-      spinner.success("Success!");
+      spinner.success('Success!');
     }
 
     if (!outputFile) {
@@ -243,25 +279,25 @@ const geminiRefactor = async (text, modelType, inputFile, outputFile) => {
           chalk.green(refactoredCode)
       );
     } else {
-      await fs.writeFile(outputFile, refactoredCode, "utf8");
+      await fsPromises.writeFile(outputFile, refactoredCode, 'utf8');
     }
 
     stdout.write(
-      chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
+      chalk.yellow.underline.bold('\n\nExplanation:\n\n') +
         chalk.blueBright(explanation)
     );
 
     return result;
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));
+    process.exit(1);
   }
 };
-
 
 //Streaming version of the refactoring code
 const geminiStreamRefactor = async (text, modelType, inputFile) => {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+    const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: modelType });
 
     const prompt = `
@@ -292,7 +328,35 @@ const geminiStreamRefactor = async (text, modelType, inputFile) => {
     return result;
   } catch (err) {
     stderr.write(chalk.red(`Error refactoring code: ${err.message}\n`));
+    process.exit(1);
   }
 };
+
+// Retrieve the values within the TOML config file (.refactorcode.toml), and export them as the `config` object
+function getConfig() {
+  // Logic to read the values from the .refactorcode.toml config file in the home directory
+  const __homedir = os.homedir();
+
+  // Look for the relevant TOML file in home directory
+  const tomlFilePath = path.join(__homedir, '.refactorcode.toml');
+
+  // If the file doesn't exist, no need to parse the file for defaults
+  if (!fs.existsSync(tomlFilePath)) {
+    return null;
+  }
+
+  let config = {};
+  try {
+    const configFileContent = fs.readFileSync(tomlFilePath, 'utf-8');
+    config = toml.parse(configFileContent);
+  } catch (error) {
+    console.error(`Error reading TOML file: ${error.message}`);
+    // If there was an error with parsing an existing file, exit.
+    process.exit(1);
+  }
+
+  // Returns config values that were parsed from .refactorcode.toml
+  return config;
+}
 
 program.parse(process.argv);

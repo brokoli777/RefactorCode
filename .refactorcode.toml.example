@@ -1,0 +1,13 @@
+# .refactorcode.toml.example
+
+[api_keys]
+
+  # Obtain your API key from https://ai.google.dev/ and set it within the quotation marks:
+
+  API_KEY = "YOUR_API_KEY_HERE"
+
+[preferences]
+
+  # Specify your prefer generative model (i.e. 1.5f or 1.5p) and set it within the quotation marks:
+
+  MODEL = "YOUR_AI_MODEL_HERE"
