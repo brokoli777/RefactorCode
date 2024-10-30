@@ -1,31 +1,37 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import yoctoSpinner from 'yocto-spinner';
-import fsPromises from 'fs/promises';
-import chalk from 'chalk';
-import { stderr, stdout } from 'process';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import chalk from "chalk";
+import fsPromises from "fs/promises";
+import process, { stderr, stdout } from "process";
+import yoctoSpinner from "yocto-spinner";
 
 //Uses the Gemini API to refactor the code using predefined prompt, returns the refactored code and explanation
-export const geminiRefactor = async (text, modelType, inputFile, outputFile, API_KEY) => {
+export const geminiRefactor = async (
+  text,
+  modelType,
+  inputFile,
+  outputFile,
+  API_KEY,
+) => {
   try {
-    const spinner = yoctoSpinner({ text: 'Refactoring Code ' }).start();
+    const spinner = yoctoSpinner({ text: "Refactoring Code " }).start();
 
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({
       model: modelType,
 
       generationConfig: {
-        responseMimeType: 'application/json',
+        responseMimeType: "application/json",
         responseSchema: {
-          type: 'object',
+          type: "object",
           properties: {
             refactoredCode: {
-              type: 'string',
+              type: "string",
             },
             explanation: {
-              type: 'string',
+              type: "string",
             },
           },
-          required: ['refactoredCode', 'explanation'],
+          required: ["refactoredCode", "explanation"],
         },
       },
     });
@@ -57,28 +63,28 @@ export const geminiRefactor = async (text, modelType, inputFile, outputFile, API
     spinner.stop();
 
     if (!refactoredCode || !explanation) {
-      spinner.error('Error refactoring code');
+      spinner.error("Error refactoring code");
       stderr.write(
         chalk.red(
-          'Error refactoring code: No refactored code or explanation returned\n'
-        )
+          "Error refactoring code: No refactored code or explanation returned\n",
+        ),
       );
     } else {
-      spinner.success('Success!');
+      spinner.success("Success!");
     }
 
     if (!outputFile) {
       stdout.write(
         chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`) +
-          chalk.green(refactoredCode)
+          chalk.green(refactoredCode),
       );
     } else {
-      await fsPromises.writeFile(outputFile, refactoredCode, 'utf8');
+      await fsPromises.writeFile(outputFile, refactoredCode, "utf8");
     }
 
     stdout.write(
-      chalk.yellow.underline.bold('\n\nExplanation:\n\n') +
-        chalk.blueBright(explanation)
+      chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
+        chalk.blueBright(explanation),
     );
 
     return result;
@@ -89,7 +95,12 @@ export const geminiRefactor = async (text, modelType, inputFile, outputFile, API
 };
 
 //Streaming version of the refactoring code
-export const geminiStreamRefactor = async (text, modelType, inputFile, API_KEY) => {
+export const geminiStreamRefactor = async (
+  text,
+  modelType,
+  inputFile,
+  API_KEY,
+) => {
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: modelType });
@@ -111,7 +122,7 @@ export const geminiStreamRefactor = async (text, modelType, inputFile, API_KEY) 
     const result = await model.generateContentStream(prompt);
 
     stdout.write(
-      chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`)
+      chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`),
     );
 
     for await (const chunk of result.stream) {

@@ -1,25 +1,35 @@
 {
-	"dependencies": {
-		"@google/generative-ai": "^0.17.1",
-		"chalk": "^5.3.0",
-		"commander": "^12.1.0",
-		"dotenv": "^16.4.5",
-		"markdown-it": "^14.1.0",
-		"toml": "^3.0.0",
-		"yocto-spinner": "^0.1.0"
-	},
-	"name": "refactorcode",
-	"version": "1.0.0",
-	"description": "A console application to reduce bugs, improve performance and improve readability of your code.",
-	"main": "./src/main.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"bin": {
-		"refactorcode": "./src/main.js"
-	},
-	"type": "module"
+  "dependencies": {
+    "@google/generative-ai": "^0.17.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "markdown-it": "^14.1.0",
+    "toml": "^3.0.0",
+    "yocto-spinner": "^0.1.0"
+  },
+  "name": "refactorcode",
+  "version": "1.0.0",
+  "description": "A console application to reduce bugs, improve performance and improve readability of your code.",
+  "main": "./src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"**/*.{js,ts,html,css,md,json}\"",
+    "lint": "eslint . ",
+    "lint:fix": "eslint . --fix "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "refactorcode": "./src/main.js"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.11.0",
+    "prettier": "3.3.3"
+  }
 }

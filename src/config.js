@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import toml from "toml";
 import "dotenv/config";
+import process from "process";
 
 // Retrieve the values within the TOML config file (.refactorcode.toml), and export them as the `config` object
 export function getConfig() {
@@ -26,6 +27,6 @@ export function getConfig() {
     process.exit(1);
   }
 
-    // Returns config values that were parsed from .refactorcode.toml
+  // Returns config values that were parsed from .refactorcode.toml
   return config;
 }
