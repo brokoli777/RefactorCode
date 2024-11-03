@@ -5,6 +5,6 @@ export default [
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
   {
-    ignores: ["**/node_modules/", "examples/**"],
+    ignores: ["**/node_modules/", "examples/**, test/**"],
   },
 ];
