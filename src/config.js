@@ -1,7 +1,7 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
-import toml from "toml";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import * as toml from "toml";
 import "dotenv/config";
 import process from "process";
 
