@@ -261,6 +261,11 @@ If you're using Visual Studio Code, install the following extensions from the Ex
 
 The settings.json in the .vscode folder specifies running prettier and eslint on save. No additional configuration is needed.
 
+
+### Tests
+
+Feel free to add any tests to ensure your feature/fix works as expected. Please run `npm run test` to check ensure the code change did not break any existing features. There is also a github workflow to run the tests when merging to main.
+
 ## Attribution
 
 This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!
