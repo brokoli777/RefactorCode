@@ -106,6 +106,8 @@ refactorcode examples/test.py -m 1.5p
 
 **-t or --token-usage:** Allows get information on the tokens used
 
+**-s or --stream** Streams the response as it is received
+
 ```bash
 
 refactorcode examples/test.py -o hello.py
