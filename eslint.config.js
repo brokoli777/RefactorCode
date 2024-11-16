@@ -5,7 +5,6 @@ export default [
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
   {
-    ignores: ["**/node_modules/", "examples/**, test/**"],
     languageOptions: {
       ecmaVersion: 'latest',
       globals: {
@@ -16,4 +15,5 @@ export default [
       },
     },
   },
+  { ignores: ["examples/", "node_modules/", "coverage/", "test/"], },
 ];
