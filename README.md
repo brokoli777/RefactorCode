@@ -17,26 +17,20 @@ https://github.com/user-attachments/assets/9ca694a3-da23-4ae3-b476-1c071e675a66
 refactorcode ./yourfile
 ```
 
-By the refactored code is displayed in the console. To specify an output file, use `-o`. See [Options](#options)
+The refactored code is displayed in the console. To specify an output file, use `-o`. See [Options](#options) for more details.
 
-## Setup Instructions
+## Installation
 
-### Clone the repo
+Ensure you have npm and node.js installed on your computer:
+[Node.js](https://nodejs.org/en)
 
+Install the package from [npm](https://www.npmjs.com/package/refactorcode), either for the project or globally
 ```bash
-git clone https://github.com/brokoli777/RefactorCode.git
+npm install refactorcode
 ```
-
-### Install node libraries
-
+OR 
 ```bash
-pnpm install
-```
-
-OR
-
-```bash
-npm install
+npm install -g refactorcode
 ```
 
 Get an API Key from here: https://ai.google.dev/aistudio
@@ -71,20 +65,38 @@ API_KEY=YOURAPIKEYHERE
 3. **Edit the Configuration**:  
    Open the `.refactorcode.toml` file in your preferred text editor, and add your API key value, and any other preferences (e.g. MODEL) you need.
 
+If you want to contribute to project or make a custom version of the library, here are the instructions:
+
+## Development Setup Instructions
+
+### Clone the repo
+
+```bash
+git clone https://github.com/brokoli777/RefactorCode.git
+```
+
+### Install node libraries
+
+```bash
+pnpm install
+```
+
+OR
+
+```bash
+npm install
+```
+
 ### Link the application
 
 ```bash
-
 npm link
-
 ```
 
 ### Run the application
 
 ```bash
-
 refactorcode examples/test.py
-
 ```
 
 ## Options
@@ -97,19 +109,16 @@ Choices:
 - 1.5p (gemini-1.5-pro)
 
 ```bash
-
 refactorcode examples/test.py -m 1.5p
-
 ```
 
 **-o or --output**- Allows to set the output file
+
+```bash
+refactorcode examples/test.py -o hello.py
+```
 
 **-t or --token-usage:** Allows get information on the tokens used
 
 **-s or --stream** Streams the response as it is received
 
-```bash
-
-refactorcode examples/test.py -o hello.py
-
-```
