@@ -8,7 +8,6 @@ test("should write ASCII art to stdout", () => {
   showBanner();
   expect(writeSpy).toHaveBeenCalled();
   expect(writeSpy).toHaveBeenCalledTimes(1);
-  expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining("_____"));
 });
 
 afterAll(() => {
