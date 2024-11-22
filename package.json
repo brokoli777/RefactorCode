@@ -19,8 +19,18 @@
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix "
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "refactor",
+    "code",
+    "performance",
+    "bugs",
+    "readability"
+  ],
+  "author": "Brokoli777",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brokoli777/RefactorCode"
+  },
   "license": "ISC",
   "bin": {
     "refactorcode": "src/main.js"
