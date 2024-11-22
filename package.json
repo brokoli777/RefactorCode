@@ -23,7 +23,7 @@
   "author": "",
   "license": "ISC",
   "bin": {
-    "refactorcode": "./src/main.js"
+    "refactorcode": "src/main.js"
   },
   "type": "module",
   "devDependencies": {
