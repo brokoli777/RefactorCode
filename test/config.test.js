@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import path from "path"; 
+import path from "path";
 
 await jest.unstable_mockModule("fs", () => ({
   existsSync: jest.fn(),
@@ -38,7 +38,7 @@ describe("getConfig", () => {
 
     expect(fs.readFileSync).toHaveBeenCalledWith(
       expect.stringContaining(path.join("/mock/home", ".refactorcode.toml")),
-      "utf-8"
+      "utf-8",
     );
     expect(toml.parse).toHaveBeenCalledWith('key = "value"');
   });
@@ -58,7 +58,7 @@ describe("getConfig", () => {
 
     getConfig();
     expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining("Error reading TOML file: File read error")
+      expect.stringContaining("Error reading TOML file: File read error"),
     );
     expect(process.exit).toHaveBeenCalledWith(1);
 

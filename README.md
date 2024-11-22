@@ -25,10 +25,13 @@ Ensure you have npm and node.js installed on your computer:
 [Node.js](https://nodejs.org/en)
 
 Install the package from [npm](https://www.npmjs.com/package/refactorcode), either for the project or globally
+
 ```bash
 npm install refactorcode
 ```
-OR 
+
+OR
+
 ```bash
 npm install -g refactorcode
 ```
@@ -121,4 +124,3 @@ refactorcode examples/test.py -o hello.py
 **-t or --token-usage:** Allows get information on the tokens used
 
 **-s or --stream** Streams the response as it is received
-

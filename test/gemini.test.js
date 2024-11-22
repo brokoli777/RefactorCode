@@ -11,7 +11,7 @@ describe("geminiRefactor with mocked LLM API", () => {
     const text = "const a = 1;";
     const modelType = "gemini-1.5-flash";
     const inputFile = "input.js";
-    const API_KEY = 'dummy-api-key';
+    const API_KEY = "dummy-api-key";
 
     const result = await geminiRefactor(
       text,
@@ -28,6 +28,5 @@ describe("geminiRefactor with mocked LLM API", () => {
     //output should contain explanation and refactored code
     expect(output).toContain("refactoredCode");
     expect(output).toContain("explanation");
-    
   });
 });

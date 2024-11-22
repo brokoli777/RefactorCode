@@ -2,11 +2,10 @@
 import chalk from "chalk";
 import { stdout } from "process";
 
-const asciiArt =
-`
+const asciiArt = `
 █▀█ █▀▀ █▀▀ ▄▀█ █▀▀ ▀█▀ █▀█ █▀█ █▀▀ █▀█ █▀▄ █▀▀
 █▀▄ ██▄ █▀░ █▀█ █▄▄ ░█░ █▄█ █▀▄ █▄▄ █▄█ █▄▀ ██▄
-`
+`;
 
 export const showBanner = () => {
   stdout.write(chalk.cyanBright(asciiArt));
