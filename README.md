@@ -2,7 +2,7 @@
 
 A console application to reduce bugs, improve performance and improve readability of your code.
 
-https://github.com/user-attachments/assets/9ca694a3-da23-4ae3-b476-1c071e675a66
+https://github.com/user-attachments/assets/6d380f94-258e-4f10-b58e-744129c836a7
 
 ## Features
 
