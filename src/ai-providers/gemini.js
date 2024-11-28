@@ -4,6 +4,19 @@ import fsPromises from "fs/promises";
 import process, { stderr, stdout } from "process";
 import yoctoSpinner from "yocto-spinner";
 
+
+const prompt = `
+  Refactor the following file by doing the following:
+    1. Remove unnecessary whitespace and unreachable or commented out code.
+    2. Remove redundant loops and correct inefficient code.
+    3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors, Security Bugs, Usability Bugs, Calculation Bugs).
+    4. Improve performance where it can be done without changing existing functionality.
+    5. Add comments and improve readability.
+    6. Make large functions more modular.
+    Also provide a brief explanation of the changes made.
+
+`
+
 //Uses the Gemini API to refactor the code using predefined prompt, returns the refactored code and explanation
 export const geminiRefactor = async (
   text,
@@ -36,15 +49,8 @@ export const geminiRefactor = async (
       },
     });
 
-    const prompt = `
-        Refactor the following file by doing the following:
-        1. Remove unnecessary whitespace and unreachable or commented out code.
-        2. Remove redundant loops and correct inefficient code.
-        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors, Security Bugs, Usability Bugs, Calculation Bugs).
-        4. Improve performance where it can be done without changing existing functionality.
-        5. Add comments and improve readability.
-        6. Make large functions more modular.
-        Also provide a brief explanation of the changes made.
+    const finalPrompt = `
+        ${prompt}
 
         For Example:
         {
@@ -56,7 +62,7 @@ export const geminiRefactor = async (
         ${text}
     `;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(finalPrompt);
 
     const { explanation, refactoredCode } = JSON.parse(result.response.text());
 
@@ -75,15 +81,20 @@ export const geminiRefactor = async (
 
     if (!outputFile) {
       stdout.write(
-        chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`) +
+        chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n`) +
           chalk.green(refactoredCode),
       );
     } else {
+      stdout.write(
+        chalk.greenBright.bold(
+          `Input: ${inputFile} --> Output: ${outputFile}\n`,
+        ),
+      );
       await fsPromises.writeFile(outputFile, refactoredCode, "utf8");
     }
 
     stdout.write(
-      chalk.yellow.underline.bold("\n\nExplanation:\n\n") +
+      chalk.yellow.underline.bold("\n\nExplanation:\n") +
         chalk.blueBright(explanation),
     );
 
@@ -105,21 +116,15 @@ export const geminiStreamRefactor = async (
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: modelType });
 
-    const prompt = `
-        Refactor the following file by doing the following:
-        1. Remove unnecessary whitespace and unreachable or commented out code.
-        2. Remove redundant loops and correct inefficient code.
-        3. Correct any bugs and errors (Syntax Errors, Performance Issues, Compatibility Issues,Functional, Unit Level and Logical Bugs, Out of Bound Errors, Security Bugs, Usability Bugs, Calculation Bugs).
-        4. Improve performance where it can be done without changing existing functionality.
-        5. Add comments and improve readability.
-        6. Make large functions more modular.
+    const finalPrompt = `
+       ${prompt}
 
-        JUST GIVE THE REFACTORED CODE/TEXT. THE RESPONSE WILL BE STREAMED AS IT IS RECEIVED
+        ONLY GIVE THE REFACTORED CODE/TEXT. THE RESPONSE WILL BE STREAMED AS IT IS RECEIVED
         Code/Text:
         ${text}
         `;
 
-    const result = await model.generateContentStream(prompt);
+    const result = await model.generateContentStream(finalPrompt);
 
     stdout.write(
       chalk.yellow.underline.bold(`\nRefactored code: ${inputFile}\n\n`),
